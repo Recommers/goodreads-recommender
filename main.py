@@ -9,6 +9,7 @@ df = pd.read_csv('/home/aliiz/Desktop/recommender/goodbooks-10k/ratings.csv')
 books_size = 100
 users_size = 100
 
+
 def make_subset_of_dataset():
     subset_of_df = df.loc[df['book_id'] < books_size]
     subset_of_df = subset_of_df.loc[subset_of_df['user_id'] < users_size]
@@ -21,7 +22,7 @@ def draw_dataset(subset_of_df):
     plt.show()
 
 
-def make_adjecancy_matrix(subset_of_df):
+def make_adjacency_matrix(subset_of_df):
 
     users_id_size = subset_of_df.user_id.nunique()
     users = subset_of_df.user_id.unique()
@@ -43,7 +44,7 @@ def make_adjecancy_matrix(subset_of_df):
 
 
 subset = make_subset_of_dataset()
-matrix = make_adjecancy_matrix(subset)
+matrix = make_adjacency_matrix(subset)
 
 G = nx.from_numpy_matrix(matrix)
 
