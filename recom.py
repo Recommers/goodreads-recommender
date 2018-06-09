@@ -8,7 +8,7 @@ df = pd.read_csv('ratings.csv')
 
 # this is bound wide of size of book and user
 books_size = 100
-users_size = 1000
+users_size = 5000
 book_dict = {}
 users_dict = {}
 
@@ -96,7 +96,7 @@ size = matrix.shape
 book_size_real = book_dict.__len__()
 user_size_real = users_dict.__len__()
 edge_size = np.count_nonzero(matrix)
-edge_del_size = temp = int(edge_size / 10000)
+edge_del_size = temp = int(edge_size / 25000)
 del_edge = []
 # for i in range(edge_del_size):
 #     del_edge.append((np.random.randint(user_size_real, user_size_real+book_size_real),
@@ -197,11 +197,13 @@ for i in range(edge_del_size):
 
 def normalize_every_row(mat):
 
+    normalized = copy.deepcopy(mat)
+
     for row in range(mat.shape[0]):
         if np.sum(mat[row]) != 0:
-            mat[row] /= np.sum(mat[row])
+            normalized[row] /= np.sum(mat[row])
 
-    return mat
+    return normalized
 
 
 def find_index(path_length):
@@ -209,7 +211,7 @@ def find_index(path_length):
 
     multiplied_matrix = copy.deepcopy(matrix)
 
-    for length in range(2, path_length):
+    for length in range(2, path_length+1):
         multiplied_matrix = multiplied_matrix.dot(matrix)
         normalized_matrix = normalize_every_row(multiplied_matrix)
         index_matrix += normalized_matrix / length
@@ -229,8 +231,6 @@ def evaluate(indexed_matrix):
         sorted_user_book = copy.deepcopy(normalized_user_book)
         sorted_user_book.sort(axis=1)
 
-        predicted_edge = []
-
         for deleted_edge in del_edge:
             user = deleted_edge[0]
             book = deleted_edge[1] - user_size_real
@@ -239,6 +239,9 @@ def evaluate(indexed_matrix):
 
             index_in_sorted = np.where(one_user == normalized_user_book[user][book])
 
+            # print("normal:", '\n', normalized_user_book[user])
+            # print("book: ", book, '\n')
+            # print("sorted: ", '\n', one_user)
             sum_of = 0
 
             # print("sum", np.sum(one_user))
@@ -250,15 +253,13 @@ def evaluate(indexed_matrix):
 
             # print(index_in_sorted[0][0])
             print("user: ", user, "book: ", book, '\n')
-
-            print(one_user[index_in_sorted[0][0]]/sum_of, '\n')
-
-
+            if sum_of != 0:
+                print(one_user[index_in_sorted[0][0]]/sum_of, '\n')
 
 
+index_matrix = find_index(4)
 
-
-evaluate(find_index(4))
+evaluate(index_matrix)
 
 
 # print(find_index(4))
