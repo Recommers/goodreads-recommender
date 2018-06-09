@@ -2,12 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import networkx as nx
 import pandas as pd
+import copy
 from operator import itemgetter
 df = pd.read_csv('ratings.csv')
 
 # this is bound wide of size of book and user
-books_size = 10
-users_size = 10
+books_size = 100
+users_size = 1000
 book_dict = {}
 users_dict = {}
 
@@ -39,13 +40,14 @@ def make_adjacency_matrix(subset_of_df):
     global book_dict
     book_dict = {v: index for index, v in np.ndenumerate(books)}
 
-    matrix = np.zeros((users_id_size + book_id_size, users_id_size + book_id_size), dtype=int)
+    matrix = np.zeros((users_id_size + book_id_size, users_id_size + book_id_size), dtype=float)
     for index, row in subset_of_df.iterrows():
         matrix[users_dict[row['user_id']], (book_dict[row['book_id']][0] + users_id_size,)] = 1
         matrix[(book_dict[row['book_id']][0] + users_id_size,), users_dict[row['user_id']]] = 1
     # print(book_dict, "book_dic")
     # print(users_dict, "user_dic")
     return matrix
+
 
 def information_data():
     """information"""
@@ -86,7 +88,7 @@ graph_pos = nx.shell_layout(g, scale=10)
 plt.figure(figsize=(64, 60))
 nx.draw(g, with_labels=True, node_color=color, pos=graph_pos)
 # plt.savefig("plot.png", dpi=1000)
-plt.show()
+# plt.show()
 
 
 size = matrix.shape
@@ -94,7 +96,7 @@ size = matrix.shape
 book_size_real = book_dict.__len__()
 user_size_real = users_dict.__len__()
 edge_size = np.count_nonzero(matrix)
-edge_del_size = temp = int(edge_size / 10)
+edge_del_size = temp = int(edge_size / 10000)
 del_edge = []
 # for i in range(edge_del_size):
 #     del_edge.append((np.random.randint(user_size_real, user_size_real+book_size_real),
@@ -138,7 +140,7 @@ print('del_edge')
 #     color.append('b')
 # for index in book_dict:
 #     color.append('r')
-# # double distance between all nodes
+# # double distance_ between all nodes
 # graph_pos = nx.shell_layout(g, scale=10)
 # plt.figure(figsize=(64, 64))
 # nx.draw(g, with_labels=True, node_color=color, pos=graph_pos)
@@ -192,17 +194,99 @@ a = sorted(p_without_useless, key=itemgetter(2), reverse=True)
 for i in range(edge_del_size):
     down = down + a[i][2]
 
-print(down)
-print(up)
-print(up/down)
-print("============= mutliply ==================")
-print(matrix)
-print("============= matrix ==================")
-matrix_2 = matrix.dot(matrix)
-print(matrix_2)
-print("============= matrix 2 ==================")
-matrix_3 = matrix_2.dot(matrix)
-print(matrix_3)
-print("============= matrix 3 ==================")
-matrix_4 = matrix_3.dot(matrix)
-print(matrix_4)
+
+def normalize_every_row(mat):
+
+    for row in range(mat.shape[0]):
+        if np.sum(mat[row]) != 0:
+            mat[row] /= np.sum(mat[row])
+
+    return mat
+
+
+def find_index(path_length):
+    index_matrix = np.zeros((matrix.shape[0], matrix.shape[0]), dtype=float)
+
+    multiplied_matrix = copy.deepcopy(matrix)
+
+    for length in range(2, path_length):
+        multiplied_matrix = multiplied_matrix.dot(matrix)
+        normalized_matrix = normalize_every_row(multiplied_matrix)
+        index_matrix += normalized_matrix / length
+
+    return index_matrix
+
+
+def evaluate(indexed_matrix):
+
+        user_book = np.zeros((user_size_real, book_size_real))
+
+        for row in range(user_size_real):
+            user_book[row] = indexed_matrix[row][user_size_real:]
+
+        normalized_user_book = normalize_every_row(user_book)
+
+        sorted_user_book = copy.deepcopy(normalized_user_book)
+        sorted_user_book.sort(axis=1)
+
+        predicted_edge = []
+
+        for deleted_edge in del_edge:
+            user = deleted_edge[0]
+            book = deleted_edge[1] - user_size_real
+
+            one_user = sorted_user_book[user]
+
+            index_in_sorted = np.where(one_user == normalized_user_book[user][book])
+
+            sum_of = 0
+
+            # print("sum", np.sum(one_user))
+
+            for m in range(index_in_sorted[0][0], book_size_real-1):
+                # print(one_user[m])
+
+                sum_of += one_user[m]
+
+            # print(index_in_sorted[0][0])
+            print("user: ", user, "book: ", book, '\n')
+
+            print(one_user[index_in_sorted[0][0]]/sum_of, '\n')
+
+
+
+
+
+
+evaluate(find_index(4))
+
+
+# print(find_index(4))
+# print(sort_index(find_index(4)))
+
+# print(matrix)
+# sort_index(matrix)
+
+
+
+
+
+
+
+
+#
+#
+# print(down)
+# print(up)
+# print(up/down)
+# print("============= mutliply ==================")
+# print(matrix.shape[0])
+# print("============= matrix ==================")
+# matrix_2 = matrix.dot(matrix)
+# print(matrix_2)
+# print("============= matrix 2 ==================")
+# matrix_3 = matrix_2.dot(matrix)
+# print(matrix_3)
+# print("============= matrix 3 ==================")
+# matrix_4 = matrix_3.dot(matrix)
+# print(matrix_4)
